@@ -1,6 +1,0 @@
-﻿  Seminar 1.c
-C:\Users\Mario\Desktop\facultate\Anul II\Semestrul II\SDD\Seminar 1\Seminar 1.c(33,26): warning C4013: 'strlen' undefined; assuming extern returning int
-C:\Users\Mario\Desktop\facultate\Anul II\Semestrul II\SDD\Seminar 1\Seminar 1.c(34,9): warning C4013: 'strcpy' undefined; assuming extern returning int
-C:\Users\Mario\Desktop\facultate\Anul II\Semestrul II\SDD\Seminar 1\Seminar 1.c(53,39): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Mario\Desktop\facultate\Anul II\Semestrul II\SDD\Seminar 1\Seminar 1.c(58,62): warning C4244: 'function': conversion from 'double' to 'int', possible loss of data
-  Seminar 1.vcxproj -> C:\Users\Mario\Desktop\facultate\Anul II\Semestrul II\SDD\Seminar 1\x64\Debug\Seminar 1.exe
