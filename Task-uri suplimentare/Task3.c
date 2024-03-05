@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <string.h>
+#include <malloc.h>
 #include <stdlib.h>
 
 struct Mall {
@@ -9,7 +11,6 @@ struct Mall {
     int nrEtaje;
     int nrParcari;
 };
-
 
 
 struct Mall* citesteMall(struct Mall* m) {
@@ -61,7 +62,6 @@ struct Mall* citesteMall(struct Mall* m) {
 }
 
 
-
 int getNrMagazineTotal(struct Mall* m) {
 
     int nrMagazine = 0;
@@ -77,7 +77,6 @@ int getNrMagazineTotal(struct Mall* m) {
 }
 
 
-
 void setNrParcari(struct Mall* m, int nrParcari) {
 
     if (nrParcari > 0)
@@ -87,7 +86,6 @@ void setNrParcari(struct Mall* m, int nrParcari) {
     else printf("Numarul de locuri de parcare trebuie sa fie pozitiv!");
 
 }
-
 
 
 void displayMall(struct Mall* m) {
@@ -116,6 +114,17 @@ void freeMallMemory(struct Mall* m) {
     free(m->nume);
     free(m->nrMagazineEtaj);
     m->nume = NULL;
+    m->nrMagazineEtaj = NULL;
+}
+
+void freeMallVectorMemory(struct Mall** m, int* dim) {
+    for (int i = 0; i < (*dim); i++) {
+        freeMallMemory(m[i]);
+    }
+
+    free(m);
+    free(dim);
+    dim = NULL;
 }
 
 struct Mall* copiazaVectorMalluri(struct Mall* m, int dimensiune, int* newDim) {
@@ -208,12 +217,11 @@ void scrieMall(struct Mall* m, const char* filename) {
     else printf("EROARE: Fisierul nu a putut fi deschis!\n");
 }
 
-void scrieVectorMall(struct Mall* m, int dimensiune, const char* filename) {
+void scrieVectorMallInFisier(struct Mall* m, int dimensiune, const char* filename) {
     FILE* f;
     f = fopen(filename, "w");
 
     if (f) {
-        fprintf(f, "%d\n", dimensiune);
         for (int i = 0; i < dimensiune; i++) {
             fprintf(f, "%s\n", m[i].nume);
             fprintf(f, "%d\n", m[i].suprafata);
@@ -229,33 +237,59 @@ void scrieVectorMall(struct Mall* m, int dimensiune, const char* filename) {
     else printf("EROARE: Fisierul nu a putut fi deschis!\n");
 }
 
-struct Mall* citesteVectorMall(const char* filename, int* dimensiune) {
-	FILE* f;
-	f = fopen(filename, "r");
+struct Mall* adaugaMallInVector(struct Mall* malluri, struct Mall mall, int* dimensiune) {
+    struct Mall* copie = (struct Mall*)malloc(sizeof(struct Mall) * ((*dimensiune) + 1));
 
-	if (f) {
-		fscanf(f, "%d", dimensiune);
-		struct Mall* malluri = (struct Mall*)malloc(*dimensiune * sizeof(struct Mall));
+    for (int i = 0; i < (*dimensiune); i++) {
+        copie[i] = malluri[i];
+    }
 
-		for (int i = 0; i < *dimensiune; i++) {
-			malluri[i].nume = (char*)malloc(100 * sizeof(char));
-			fscanf(f, "%s", malluri[i].nume);
-			fscanf(f, "%d", &malluri[i].suprafata);
-			fscanf(f, "%d", &malluri[i].nrEtaje);
-			malluri[i].nrMagazineEtaj = (int*)malloc(malluri[i].nrEtaje * sizeof(int));
-			for (int j = 0; j < malluri[i].nrEtaje; j++) {
-				fscanf(f, "%d", &malluri[i].nrMagazineEtaj[j]);
-			}
-			fscanf(f, "%d", &malluri[i].nrParcari);
-		}
+    copie[(*dimensiune)] = mall;
+    (*dimensiune)++;
 
-		fclose(f);
-		return malluri;
-	}
-	else {
-		printf("EROARE: Fisierul nu a putut fi deschis!\n");
-		return NULL;
-	}
+    return copie;
+}
+
+struct Mall* citesteVectorMallDinFisier(const char* filename, int* dimensiune) {
+    FILE* f;
+    f = fopen(filename, "r");
+
+    if (f) {
+        struct Mall* malluri = NULL;
+        (*dimensiune) = 0;
+        char line[100];
+
+        while (fgets(line, sizeof(line), f)) {
+            struct Mall mall;
+            char* data = strtok(line, "\n");
+            mall.nume = (char*)malloc(sizeof(char) * (strlen(data) + 1));
+            strcpy(mall.nume, data);
+
+            fgets(line, sizeof(line), f);
+            mall.suprafata = atoi(line);
+
+            fgets(line, sizeof(line), f);
+            mall.nrEtaje = atoi(line);
+
+            mall.nrMagazineEtaj = (int*)malloc(mall.nrEtaje * sizeof(int));
+            for (int i = 0; i < mall.nrEtaje; i++) {
+                fgets(line, sizeof(line), f);
+                mall.nrMagazineEtaj[i] = atoi(line);
+            }
+
+            fgets(line, sizeof(line), f);
+            mall.nrParcari = atoi(line);
+    
+            malluri = adaugaMallInVector(malluri, mall, dimensiune);
+        }
+
+        fclose(f);
+        return malluri;
+    }
+    else {
+        printf("EROARE: Fisierul nu a putut fi deschis!\n");
+        return NULL;
+    }
 }
 
 
@@ -278,9 +312,9 @@ void main() {
         citesteMall(&malluri1[i]);
     }
 
-    scrieVectorMall(malluri1, dimMalluri1, "vectormalluri1.txt");
+    scrieVectorMallInFisier(malluri1, dimMalluri1, "vectormalluri.txt");
     int* dimMalluri5;
-    struct Mall* malluri5 = citesteVectorMall("vectormalluri1.txt", &dimMalluri5);
+    struct Mall* malluri5 = citesteVectorMallDinFisier("vectormalluri.txt", &dimMalluri5);
     afiseazaVectorMalluri(malluri5, dimMalluri5);
 
     int* dimMalluri2;
@@ -298,25 +332,10 @@ void main() {
     afiseazaVectorMalluri(malluri4, dimMalluri4);
 
     freeMallMemory(&m1);
-
-    for (int i = 0; i < dimMalluri1; i++) {
-        freeMallMemory(&malluri1[i]);
-    }
-
-    for (int i = 0; i < dimMalluri2; i++) {
-        freeMallMemory(&malluri2[i]);
-    }
-
-    for (int i = 0; i < dimMalluri3; i++) {
-        freeMallMemory(&malluri3[i]);
-    }
-
-    for (int i = 0; i < dimMalluri4; i++) {
-        freeMallMemory(&malluri4[i]);
-    }
-
-    for (int i = 0; i < dimMalluri5; i++) {
-        freeMallMemory(&malluri5[i]);
-    }
-
+     
+    freeMallVectorMemory(malluri1, dimMalluri1);
+    freeMallVectorMemory(malluri2, dimMalluri2);
+    freeMallVectorMemory(malluri3, dimMalluri3);
+    freeMallVectorMemory(malluri4, dimMalluri4);
+    freeMallVectorMemory(malluri5, dimMalluri5);
 }
